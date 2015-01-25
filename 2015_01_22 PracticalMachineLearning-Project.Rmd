@@ -1,0 +1,113 @@
+---
+title: "2015_01_24 Practical Machine Learning - Project"
+author: "Michael Celeste"
+date: "Saturday, January 24, 2015"
+output: html_document
+---
+
+## Introduction
+
+This analysis includes a machine learning algorithm that attempts to predict whether or not a person is doing a particular exercise correctly.
+
+## Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+## Data 
+
+The training data for this project are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+# Data loading and transformation
+
+After loading the data into R the data is then split into a training and test set. In order to perform the machine learning algorithm the NAs are set to 0. Also, a list of features are removed that have low number of value and do not contribute to the machine learning algorithm. These features were inspected via a summary of the data set.
+
+
+```{r, echo=TRUE}
+
+library(caret)
+library(randomForest)
+
+setwd("~/GitHub/PracticalMachineLearning-Project")
+
+train_data <- read.csv( "pml-training.csv" )
+test_data <- read.csv( "pml-testing.csv" )
+
+inTrain <- createDataPartition( train_data$classe, p=0.75, list=FALSE )
+
+training <- train_data[ inTrain, ]
+testing <- train_data[ -inTrain, ]
+
+training [is.na(training)] <- 0
+testing [is.na(testing)] <- 0
+
+## Features to be removed 
+remove <- c(1,2,3,4,5,6,7,12,13,14,15,16,17,20,23,26,69,70,71,72,73,74,87,88,89,90,91,92,95,98,101,125,126,127, 128,129,130,133,136,139)
+
+training <- training[ , -remove ]
+testing <- testing[ , -remove ]
+
+```
+
+# Features removed
+ [1] "roll_belt"                "pitch_belt"               "yaw_belt"                 "total_accel_belt"        
+  [5] "max_roll_belt"            "max_picth_belt"           "min_roll_belt"            "min_pitch_belt"          
+  [9] "amplitude_roll_belt"      "amplitude_pitch_belt"     "var_total_accel_belt"     "avg_roll_belt"           
+ [13] "stddev_roll_belt"         "var_roll_belt"            "avg_pitch_belt"           "stddev_pitch_belt"       
+ [17] "var_pitch_belt"           "avg_yaw_belt"             "stddev_yaw_belt"          "var_yaw_belt"            
+ [21] "gyros_belt_x"             "gyros_belt_y"             "gyros_belt_z"             "accel_belt_x"            
+ [25] "accel_belt_y"             "accel_belt_z"             "magnet_belt_x"            "magnet_belt_y"           
+ [29] "magnet_belt_z"            "roll_arm"                 "pitch_arm"                "yaw_arm"                 
+ [33] "total_accel_arm"          "var_accel_arm"            "avg_roll_arm"             "stddev_roll_arm"         
+ [37] "var_roll_arm"             "avg_pitch_arm"            "stddev_pitch_arm"         "var_pitch_arm"           
+ [41] "avg_yaw_arm"              "stddev_yaw_arm"           "var_yaw_arm"              "gyros_arm_x"             
+ [45] "gyros_arm_y"              "gyros_arm_z"              "accel_arm_x"              "accel_arm_y"             
+ [49] "accel_arm_z"              "magnet_arm_x"             "magnet_arm_y"             "magnet_arm_z"            
+ [53] "max_roll_arm"             "max_picth_arm"            "max_yaw_arm"              "min_roll_arm"            
+ [57] "min_pitch_arm"            "min_yaw_arm"              "amplitude_roll_arm"       "amplitude_pitch_arm"     
+ [61] "amplitude_yaw_arm"        "roll_dumbbell"            "pitch_dumbbell"           "yaw_dumbbell"            
+ [65] "max_roll_dumbbell"        "max_picth_dumbbell"       "min_roll_dumbbell"        "min_pitch_dumbbell"      
+ [69] "amplitude_roll_dumbbell"  "amplitude_pitch_dumbbell" "total_accel_dumbbell"     "var_accel_dumbbell"      
+ [73] "avg_roll_dumbbell"        "stddev_roll_dumbbell"     "var_roll_dumbbell"        "avg_pitch_dumbbell"      
+ [77] "stddev_pitch_dumbbell"    "var_pitch_dumbbell"       "avg_yaw_dumbbell"         "stddev_yaw_dumbbell"     
+ [81] "var_yaw_dumbbell"         "gyros_dumbbell_x"         "gyros_dumbbell_y"         "gyros_dumbbell_z"        
+ [85] "accel_dumbbell_x"         "accel_dumbbell_y"         "accel_dumbbell_z"         "magnet_dumbbell_x"       
+ [89] "magnet_dumbbell_y"        "magnet_dumbbell_z"        "roll_forearm"             "pitch_forearm"           
+ [93] "yaw_forearm"              "max_roll_forearm"         "max_picth_forearm"        "min_roll_forearm"        
+ [97] "min_pitch_forearm"        "amplitude_roll_forearm"   "amplitude_pitch_forearm"  "total_accel_forearm"     
+[101] "var_accel_forearm"        "avg_roll_forearm"         "stddev_roll_forearm"      "var_roll_forearm"        
+[105] "avg_pitch_forearm"        "stddev_pitch_forearm"     "var_pitch_forearm"        "avg_yaw_forearm"         
+[109] "stddev_yaw_forearm"       "var_yaw_forearm"          "gyros_forearm_x"          "gyros_forearm_y"         
+[113] "gyros_forearm_z"          "accel_forearm_x"          "accel_forearm_y"          "accel_forearm_z"         
+[117] "magnet_forearm_x"         "magnet_forearm_y"         "magnet_forearm_z"         
+
+## Analysis
+
+A random forest algorithm is applied to the training set to build a model. The predict function is then used on the test data set in order to be able to calculate the out of sample error and create a confusion matrix. 
+
+```{r, echo=TRUE}
+
+# Execeute a random forest algorithm on the training set
+model <- randomForest( classe~., data=training )
+
+pred <- predict( model, testing )
+
+# Create confusion matrix
+table ( pred, testing$classe )
+
+```
+
+## Results
+
+As shown below, the out of sample error rate is 0.49% using an out-of-bag cross-validation method.
+
+```{r, echo=TRUE}
+
+print(model)
+
+```
+
+   
