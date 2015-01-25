@@ -86,7 +86,7 @@ testing <- testing[ , -remove ]
 
 ## Analysis
 
-A random forest algorithm is applied to the training set to build a model. The predict function is then used on the test data set in order to be able to calculate the out of sample error and create a confusion matrix. 
+A random forest algorithm is applied to the training set to build a model. It was chosen because it performed better than other algorithms since the data set had so many features and it was difficult to identify the ones that truly were important. The predict function is then used on the test data set in order to be able to calculate the out of sample error and create a confusion matrix. 
 
 ```{r, echo=TRUE}
 
